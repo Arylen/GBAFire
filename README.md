@@ -4,7 +4,7 @@ Just a very simple implementation of the Doom Fire algorithm for the Game Boy Ad
 
 ## Preview
 
-[![Watch the preview video](https://raw.githubusercontent.com/Arylen/GBAFire/main/assets/gbafire-preview.png)](https://raw.githubusercontent.com/Arylen/GBAFire/main/assets/gbafire-preview.mp4)
+![Fire Preview, Imagine like... fire, but cool.](assets/gbafire-thumbnail.png)
 
 ## Download
 
