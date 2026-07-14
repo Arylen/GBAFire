@@ -3,24 +3,60 @@
 #include <gba_types.h>
 #include <gba_video.h>
 
-const int WIDTH = SCREEN_WIDTH - 10;
-const int HEIGHT = SCREEN_HEIGHT - 20;
+u32 randomState = 0x82BD18ACu;
+
+[[gnu::always_inline]]
+inline u32 nextRandom() noexcept {
+    randomState ^= randomState << 13;
+    randomState ^= randomState >> 17;
+    randomState ^= randomState << 5;
+    return randomState;
+}
+
+const u8 PALETTE_SIZE = 32;
+constexpr u16 PALETTE[] {
+    RGB5( 0,  0,  0),
+    RGB5( 3,  0,  0),
+    RGB5( 6,  0,  0),
+    RGB5( 9,  0,  0),
+    RGB5(12,  0,  0),
+    RGB5(16,  0,  0),
+    RGB5(20,  0,  0),
+    RGB5(24,  0,  0),
+    RGB5(28,  0,  0),
+    RGB5(31,  1,  0),
+    RGB5(31,  3,  0),
+    RGB5(31,  5,  0),
+    RGB5(31,  7,  0),
+    RGB5(31,  9,  0),
+    RGB5(31, 11,  0),
+    RGB5(31, 13,  0),
+    RGB5(31, 15,  0),
+    RGB5(31, 17,  0),
+    RGB5(31, 19,  0),
+    RGB5(31, 21,  0),
+    RGB5(31, 23,  0),
+    RGB5(31, 25,  0),
+    RGB5(31, 27,  0),
+    RGB5(31, 29,  0),
+    RGB5(31, 31,  0),
+    RGB5(31, 31,  3),
+    RGB5(31, 31,  6),
+    RGB5(31, 31, 10),
+    RGB5(31, 31, 14),
+    RGB5(31, 31, 19),
+    RGB5(31, 31, 25),
+    RGB5(31, 31, 31),
+};
+
+constexpr int MIRROR_COUNT = 4;
+constexpr int WIDTH = SCREEN_WIDTH / MIRROR_COUNT;
+constexpr int HEIGHT = SCREEN_HEIGHT / 2;
+constexpr int HEIGHT_DRAW_OFFSET = SCREEN_HEIGHT - HEIGHT;
 
 #define CELL_IDX(x, y) (((y) * WIDTH) + (x))
 
 u8 cells_[WIDTH * HEIGHT];
-
-const u8 PALETTE_SIZE = 8;
-constexpr u16 PALETTE[] {
-    RGB5( 0,  0,  0),
-    RGB5( 8,  0,  0),
-    RGB5(16,  0,  0),
-    RGB5(24,  1,  0),
-    RGB5(31,  6,  0),
-    RGB5(31, 15,  0),
-    RGB5(31, 27,  2),
-    RGB5(31, 31, 31),
-};
 
 void Fire::init() {
     // Fill bottom row with pure white cells
@@ -30,10 +66,31 @@ void Fire::init() {
 }
 
 void Fire::update() {
-    for (int y = 0; y < HEIGHT; ++y) {
+    for (int y = 1; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
             u8 cellValue = cells_[CELL_IDX(x, y)];
-            // if (cellValue > 0)
+            if (cellValue == 0) {
+                cells_[CELL_IDX(x, y - 1)] = 0;
+                continue;
+            }
+            u8 propValue = 0;
+            if (nextRandom() & 1) {
+                propValue = 1;
+            }
+
+            int horizontalDirValue = 0;
+            if (nextRandom() & 1) {
+                horizontalDirValue = 1;
+            } else if (nextRandom() & 1) {
+                horizontalDirValue = -1;
+            }
+
+            int randCellX = x + horizontalDirValue;
+            if (randCellX < 0 || randCellX >= WIDTH) {
+                continue;
+            }
+
+            cells_[CELL_IDX(randCellX, y - 1)] = cellValue - propValue;
         }
     }
 }
@@ -42,7 +99,9 @@ void Fire::draw() {
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
             u8 cellValue = cells_[CELL_IDX(x, y)];
-            gfx::putPixel(x, y, PALETTE[cellValue]);
+            for (int xRepeat = 0; xRepeat < MIRROR_COUNT; xRepeat++) {
+                gfx::putPixel(x + (WIDTH * xRepeat), y + HEIGHT_DRAW_OFFSET, PALETTE[cellValue]);
+            }
         }
     }
 }
