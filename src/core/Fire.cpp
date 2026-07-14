@@ -52,7 +52,7 @@ constexpr u16 PALETTE[] {
 constexpr int MIRROR_COUNT = 4;
 constexpr int WIDTH = SCREEN_WIDTH / MIRROR_COUNT;
 constexpr int HEIGHT = SCREEN_HEIGHT / 2;
-constexpr int HEIGHT_DRAW_OFFSET = SCREEN_HEIGHT - HEIGHT;
+constexpr int Y_DRAW_OFFSET = SCREEN_HEIGHT - HEIGHT;
 
 #define CELL_IDX(x, y) (((y) * WIDTH) + (x))
 
@@ -73,24 +73,25 @@ void Fire::update() {
                 cells_[CELL_IDX(x, y - 1)] = 0;
                 continue;
             }
-            u8 propValue = 0;
-            if (nextRandom() & 1) {
-                propValue = 1;
+
+            const u32 rng = nextRandom();
+
+            const u8 upAmount = rng & 1;
+            const u32 directionRoll = (rng >> 1) & 3;
+
+            int horizontalDir = 0;
+            if (directionRoll < 2) {
+                horizontalDir = 1;
+            } else if (directionRoll == 2) {
+                horizontalDir = -1;
             }
 
-            int horizontalDirValue = 0;
-            if (nextRandom() & 1) {
-                horizontalDirValue = 1;
-            } else if (nextRandom() & 1) {
-                horizontalDirValue = -1;
-            }
-
-            int randCellX = x + horizontalDirValue;
+            int randCellX = x + horizontalDir;
             if (randCellX < 0 || randCellX >= WIDTH) {
                 continue;
             }
 
-            cells_[CELL_IDX(randCellX, y - 1)] = cellValue - propValue;
+            cells_[CELL_IDX(randCellX, y - 1)] = cellValue - upAmount;
         }
     }
 }
@@ -100,7 +101,7 @@ void Fire::draw() {
         for (int x = 0; x < WIDTH; ++x) {
             u8 cellValue = cells_[CELL_IDX(x, y)];
             for (int xRepeat = 0; xRepeat < MIRROR_COUNT; xRepeat++) {
-                gfx::putPixel(x + (WIDTH * xRepeat), y + HEIGHT_DRAW_OFFSET, PALETTE[cellValue]);
+                gfx::putPixel(x + (WIDTH * xRepeat), y + Y_DRAW_OFFSET, PALETTE[cellValue]);
             }
         }
     }
