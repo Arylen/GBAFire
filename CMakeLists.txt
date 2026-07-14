@@ -6,6 +6,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(gbafire
   src/main.cpp
+  src/core/Fire.cpp
+)
+
+target_include_directories(gbafire
+  PRIVATE
+  "${CMAKE_SOURCE_DIR}/src"
 )
 
 target_compile_features(gbafire PRIVATE cxx_std_17)
